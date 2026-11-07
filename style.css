@@ -19,6 +19,16 @@ body {
   position: relative;
 }
 
+.game-title {
+  text-align: center;
+  font-size: 36px;
+  line-height: 44px;
+  font-weight: 800;
+  letter-spacing: 6px;
+  color: #7aa2f7;
+  margin-bottom: 16px;
+}
+
 .game-container {
   display: flex;
   gap: 20px;
@@ -99,7 +109,10 @@ kbd {
 /* ---- Overlay ---- */
 .overlay {
   position: absolute;
-  inset: 0;
+  top: 60px; /* altura del título (44px + 16px de margen) */
+  right: 0;
+  bottom: 0;
+  left: 0;
   display: flex;
   align-items: center;
   justify-content: center;
