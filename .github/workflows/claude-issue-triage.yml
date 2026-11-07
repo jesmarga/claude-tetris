@@ -1,0 +1,57 @@
+name: Claude Issue Triage
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  triage:
+    # Evita bucles/doble trabajo con bots
+    if: github.event.issue.user.type != 'Bot'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write # editar cuerpo + añadir labels
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Triage y diagnóstico con Claude
+        uses: anthropics/claude-code-action@v1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            ISSUE: #${{ github.event.issue.number }}
+
+            Eres el encargado de triage de este repo (Tetris en JS vanilla + Canvas; lee CLAUDE.md).
+            1. Lee el issue: `gh issue view ${{ github.event.issue.number }} --json title,body,labels`.
+            2. Lista los labels disponibles: `gh label list --limit 100`.
+            3. Explora el código relevante (index.html, game.js, style.css) con Read/Grep/Glob.
+            4. Asigna 1–3 labels EXISTENTES apropiados:
+               `gh issue edit <n> --add-label "a,b"`. No crees labels nuevos.
+            5. Edita el cuerpo del issue CONSERVANDO el texto original íntegro y
+               anexando al final (si ya existe la sección, reemplázala):
+
+               ---
+               ## 🤖 Diagnóstico de Claude
+               **Tipo:** bug / mejora / pregunta / …
+               **Resumen:** …
+               **Causa probable / análisis:** …
+               **Archivos y funciones involucradas:** `game.js:<línea>` – `función()` …
+               **Propuesta de solución:** pasos concretos
+               **Riesgos / consideraciones:** (p. ej. acoplamiento canvas↔constantes, ids del DOM)
+               **Complejidad estimada:** baja / media / alta
+
+               Escribe el nuevo cuerpo en un archivo temporal y usa
+               `gh issue edit <n> --body-file <archivo>`.
+            Todo en español. No modifiques código, no abras PRs, no comentes.
+          claude_args: >-
+            --allowedTools "Read,Glob,Grep,Write,Bash(gh issue view:*),Bash(gh issue edit:*),Bash(gh label list:*)"
