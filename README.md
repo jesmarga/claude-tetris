@@ -86,6 +86,10 @@ Después abre `http://localhost:8000` en el navegador.
 | `Espacio` | Hard drop (caída instantánea)     |
 | `P`       | Pausar / reanudar                 |
 
+### Tema claro / oscuro
+
+El juego arranca en **modo oscuro**. El botón **Modo claro / Modo oscuro** del panel lateral cambia el tema de toda la interfaz (página, tablero, panel y overlay). La elección se guarda en `localStorage`.
+
 ---
 
 ## Cómo funciona
@@ -99,6 +103,7 @@ Define la estructura visual:
 - Un `<canvas id="board">` de **300 × 600** píxeles donde se renderiza el tablero.
 - Un panel lateral con `SCORE`, `LINES`, `LEVEL`, vista de la siguiente pieza y la lista de controles.
 - Un overlay para los estados **PAUSA** y **GAME OVER**.
+- Un botón `#theme-toggle` para alternar entre tema oscuro y claro.
 
 ### 2. `style.css`
 

@@ -40,6 +40,26 @@ const overlayTitle = document.getElementById('overlay-title');
 const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
 
+const themeToggle = document.getElementById('theme-toggle');
+
+// Colores del canvas leídos de las variables CSS (ver applyTheme)
+const theme = { grid: '#22222e', highlight: 'rgba(255,255,255,0.12)', blockBorder: 'transparent' };
+
+function applyTheme(name) {
+  const isLight = name === 'light';
+  if (isLight) document.documentElement.dataset.theme = 'light';
+  else delete document.documentElement.dataset.theme;
+  const css = getComputedStyle(document.documentElement);
+  theme.grid = css.getPropertyValue('--grid-color').trim();
+  theme.highlight = css.getPropertyValue('--block-highlight').trim();
+  theme.blockBorder = css.getPropertyValue('--block-border').trim();
+  themeToggle.textContent = isLight ? 'Modo oscuro' : 'Modo claro';
+  themeToggle.setAttribute('aria-pressed', String(isLight));
+  themeToggle.setAttribute('aria-label', isLight ? 'Activar modo oscuro' : 'Activar modo claro');
+  // El canvas solo se redibuja en loop(); forzar redibujado (pausa / game over)
+  if (current && next) { draw(); drawNext(); }
+}
+
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 
 function createBoard() {
@@ -163,13 +183,17 @@ function drawBlock(context, x, y, colorIndex, size, alpha) {
   context.fillStyle = color;
   context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
   // highlight
-  context.fillStyle = 'rgba(255,255,255,0.12)';
+  context.fillStyle = theme.highlight;
   context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
+  // borde (solo visible en tema claro, para dar contraste a los colores pastel)
+  context.strokeStyle = theme.blockBorder;
+  context.lineWidth = 1;
+  context.strokeRect(x * size + 1.5, y * size + 1.5, size - 3, size - 3);
   context.globalAlpha = 1;
 }
 
 function drawGrid() {
-  ctx.strokeStyle = '#22222e';
+  ctx.strokeStyle = theme.grid;
   ctx.lineWidth = 0.5;
   for (let c = 1; c < COLS; c++) {
     ctx.beginPath();
@@ -300,5 +324,15 @@ document.addEventListener('keydown', e => {
 });
 
 restartBtn.addEventListener('click', init);
+
+themeToggle.addEventListener('click', () => {
+  const isLight = document.documentElement.dataset.theme === 'light';
+  const newTheme = isLight ? 'dark' : 'light';
+  try { localStorage.setItem('theme', newTheme); } catch (e) {}
+  applyTheme(newTheme);
+  themeToggle.blur(); // evita que Space dispare el botón y hardDrop() a la vez
+});
+
+applyTheme(document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
 
 init();
