@@ -274,6 +274,7 @@ function loop(ts) {
       current.y++;
     } else {
       lockPiece();
+      if (gameOver) { draw(); return; } // no re-armar el bucle tras endGame()
     }
   }
   draw();
