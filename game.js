@@ -14,7 +14,12 @@ const COLORS = [
   '#90caf9', // J - azul pálido
   '#ffb74d', // L - orange
   '#b0bec5', // Tuerca - gris acero
+  '#ff5252', // Bomba - mecha/chispa
 ];
+
+const BOMB = 9;
+const BOMB_CHANCE = 0.1;
+const BOMB_BLOCK_SCORE = 10;
 
 const PIECES = [
   null,
@@ -26,6 +31,7 @@ const PIECES = [
   [[6,0,0],[6,6,6],[0,0,0]],                  // J
   [[0,0,7],[7,7,7],[0,0,0]],                  // L
   [[8,8,8],[8,0,8],[8,8,8]],                  // Tuerca (reto: hueco central)
+  [[9]],                                       // Bomba (power-up, nunca se guarda en el tablero)
 ];
 
 const LINE_SCORES = [0, 100, 300, 500, 800];
@@ -45,7 +51,7 @@ const restartBtn = document.getElementById('restart-btn');
 const themeToggle = document.getElementById('theme-toggle');
 
 // Colores del canvas leídos de las variables CSS (ver applyTheme)
-const theme = { grid: '#22222e', highlight: 'rgba(255,255,255,0.12)', blockBorder: 'transparent' };
+const theme = { grid: '#22222e', highlight: 'rgba(255,255,255,0.12)', blockBorder: 'transparent', bombBody: '#222' };
 
 function applyTheme(name) {
   const isLight = name === 'light';
@@ -55,6 +61,7 @@ function applyTheme(name) {
   theme.grid = css.getPropertyValue('--grid-color').trim();
   theme.highlight = css.getPropertyValue('--block-highlight').trim();
   theme.blockBorder = css.getPropertyValue('--block-border').trim();
+  theme.bombBody = css.getPropertyValue('--bomb-body').trim() || theme.bombBody;
   themeToggle.textContent = isLight ? 'Modo oscuro' : 'Modo claro';
   themeToggle.setAttribute('aria-pressed', String(isLight));
   themeToggle.setAttribute('aria-label', isLight ? 'Activar modo oscuro' : 'Activar modo claro');
@@ -69,7 +76,10 @@ function createBoard() {
 }
 
 function randomPiece() {
-  const type = Math.floor(Math.random() * (PIECES.length - 1)) + 1;
+  // La bomba sale por probabilidad aparte; el resto (1..8) es uniforme
+  const type = Math.random() < BOMB_CHANCE
+    ? BOMB
+    : Math.floor(Math.random() * (PIECES.length - 2)) + 1;
   const shape = PIECES[type].map(row => [...row]);
   return { type, shape, x: Math.floor(COLS / 2) - Math.floor(shape[0].length / 2), y: 0 };
 }
@@ -115,6 +125,18 @@ function merge() {
         board[current.y + r][current.x + c] = current.shape[r][c];
 }
 
+function explode(cx, cy) {
+  let destroyed = 0;
+  for (let r = cy - 1; r <= cy + 1; r++) {
+    for (let c = cx - 1; c <= cx + 1; c++) {
+      if (r < 0 || r >= ROWS || c < 0 || c >= COLS) continue;
+      if (board[r][c]) { board[r][c] = 0; destroyed++; }
+    }
+  }
+  score += destroyed * BOMB_BLOCK_SCORE * level;
+  updateHUD();
+}
+
 function clearLines() {
   let cleared = 0;
   for (let r = ROWS - 1; r >= 0; r--) {
@@ -158,7 +180,8 @@ function softDrop() {
 }
 
 function lockPiece() {
-  merge();
+  if (current.type === BOMB) explode(current.x, current.y);
+  else merge();
   clearLines();
   spawn();
 }
@@ -182,6 +205,25 @@ function drawBlock(context, x, y, colorIndex, size, alpha) {
   if (!colorIndex) return;
   const color = COLORS[colorIndex];
   context.globalAlpha = alpha ?? 1;
+  if (colorIndex === BOMB) {
+    const cx = x * size + size / 2, cy = y * size + size / 2 + 2;
+    context.fillStyle = theme.bombBody;
+    context.beginPath();
+    context.arc(cx, cy, size / 2 - 4, 0, Math.PI * 2);
+    context.fill();
+    context.strokeStyle = color;
+    context.lineWidth = 2;
+    context.stroke();
+    // mecha y chispa
+    context.beginPath();
+    context.moveTo(cx + 4, cy - size / 2 + 5);
+    context.lineTo(cx + 8, cy - size / 2 + 1);
+    context.stroke();
+    context.fillStyle = color;
+    context.fillRect(cx + 7, cy - size / 2 - 1, 4, 4);
+    context.globalAlpha = 1;
+    return;
+  }
   context.fillStyle = color;
   context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
   // highlight
