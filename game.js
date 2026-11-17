@@ -49,6 +49,19 @@ const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
 
 const themeToggle = document.getElementById('theme-toggle');
+const skinSelect = document.getElementById('skin-select');
+
+// Skin activa (definidas en skins.js)
+let skin = SKINS.retro;
+
+function applySkin(name) {
+  skin = SKINS[name] || SKINS.retro;
+  const bg = skin.background || '';
+  canvas.style.background = bg;
+  nextCanvas.style.background = bg;
+  skinSelect.value = SKINS[name] ? name : 'retro';
+  if (current && next) { draw(); drawNext(); }
+}
 
 // Colores del canvas leídos de las variables CSS (ver applyTheme)
 const theme = { grid: '#22222e', highlight: 'rgba(255,255,255,0.12)', blockBorder: 'transparent', bombBody: '#222' };
@@ -203,7 +216,7 @@ function updateHUD() {
 
 function drawBlock(context, x, y, colorIndex, size, alpha) {
   if (!colorIndex) return;
-  const color = COLORS[colorIndex];
+  const color = skin.colors[colorIndex];
   context.globalAlpha = alpha ?? 1;
   if (colorIndex === BOMB) {
     const cx = x * size + size / 2, cy = y * size + size / 2 + 2;
@@ -224,20 +237,11 @@ function drawBlock(context, x, y, colorIndex, size, alpha) {
     context.globalAlpha = 1;
     return;
   }
-  context.fillStyle = color;
-  context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
-  // highlight
-  context.fillStyle = theme.highlight;
-  context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
-  // borde (solo visible en tema claro, para dar contraste a los colores pastel)
-  context.strokeStyle = theme.blockBorder;
-  context.lineWidth = 1;
-  context.strokeRect(x * size + 1.5, y * size + 1.5, size - 3, size - 3);
-  context.globalAlpha = 1;
+  skin.drawBlock(context, x * size, y * size, size, color, alpha ?? 1);
 }
 
 function drawGrid() {
-  ctx.strokeStyle = theme.grid;
+  ctx.strokeStyle = skin.grid || theme.grid;
   ctx.lineWidth = 0.5;
   for (let c = 1; c < COLS; c++) {
     ctx.beginPath();
@@ -379,5 +383,15 @@ themeToggle.addEventListener('click', () => {
 });
 
 applyTheme(document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
+
+skinSelect.addEventListener('change', () => {
+  try { localStorage.setItem('skin', skinSelect.value); } catch (e) {}
+  applySkin(skinSelect.value);
+  skinSelect.blur(); // evita que Space cambie el select y hardDrop() a la vez
+});
+
+let savedSkin = 'retro';
+try { savedSkin = localStorage.getItem('skin') || 'retro'; } catch (e) {}
+applySkin(savedSkin);
 
 init();

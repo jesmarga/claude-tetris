@@ -92,6 +92,10 @@ Después abre `http://localhost:8000` en el navegador.
 
 El juego arranca en **modo oscuro**. El botón **Modo claro / Modo oscuro** del panel lateral cambia el tema de toda la interfaz (página, tablero, panel y overlay). La elección se guarda en `localStorage`.
 
+### Skins
+
+El selector **SKIN** del panel lateral cambia el aspecto de los bloques sin recargar: **Retro** (colores planos, estilo clásico), **Neon** (fondo negro y brillo con `shadowBlur`), **Pastel** (colores suaves y bordes redondeados) y **Pixel art** (textura de píxeles y bisel). La elección se guarda en `localStorage` y convive con el tema claro / oscuro.
+
 ---
 
 ## Cómo funciona
@@ -105,6 +109,7 @@ Define la estructura visual:
 - Un `<canvas id="board">` de **300 × 600** píxeles donde se renderiza el tablero.
 - Un panel lateral con `SCORE`, `LINES`, `LEVEL`, vista de la siguiente pieza y la lista de controles.
 - Un overlay para los estados **PAUSA** y **GAME OVER**.
+- Un selector `#skin-select` para elegir la skin visual.
 - Un botón `#theme-toggle` para alternar entre tema oscuro y claro.
 
 ### 2. `style.css`
