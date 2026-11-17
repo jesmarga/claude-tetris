@@ -69,7 +69,17 @@
       <div class="overlay-box">
         <p id="overlay-title">GAME OVER</p>
         <p id="overlay-score"></p>
-        <button id="restart-btn">Reiniciar</button>
+        <p id="records-note" class="hidden"></p>
+        <form id="name-form" class="hidden">
+          <input id="name-input" type="text" maxlength="12" value="Jugador" autocomplete="off" aria-label="Tu nombre" />
+          <button id="save-btn" type="submit">Guardar</button>
+        </form>
+        <div id="records-view">
+          <table id="records-table"></table>
+          <p id="records-stats"></p>
+        </div>
+        <button id="restart-btn">Jugar</button>
+        <button id="clear-records-btn" type="button">Borrar records</button>
       </div>
     </div>
 
@@ -95,6 +105,7 @@
 
   <script src="pause.js"></script>
   <script src="skins.js"></script>
+  <script src="records.js"></script>
   <script src="game.js"></script>
 </body>
 </html>
