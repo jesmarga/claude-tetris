@@ -348,6 +348,7 @@ function init() {
 }
 
 document.addEventListener('keydown', e => {
+  if (document.activeElement === skinSelect) skinSelect.blur(); // evita que flechas/Space cambien el select
   if (e.code === 'KeyP') { togglePause(); return; }
   if (paused || gameOver) return;
   switch (e.code) {
