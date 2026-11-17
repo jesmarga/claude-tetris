@@ -69,7 +69,7 @@ function applyTheme(name) {
   if (current && next) { draw(); drawNext(); }
 }
 
-let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
+let startLevel, board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 
 function createBoard() {
   return Array.from({ length: ROWS }, () => new Array(COLS).fill(0));
@@ -150,7 +150,7 @@ function clearLines() {
   if (cleared) {
     lines += cleared;
     score += (LINE_SCORES[cleared] || 0) * level;
-    level = Math.max(getStartLevel(), Math.floor(lines / 10) + 1);
+    level = Math.max(startLevel, Math.floor(lines / 10) + 1);
     dropInterval = levelInterval(level);
     updateHUD();
   }
@@ -328,7 +328,8 @@ function init() {
   board = createBoard();
   score = 0;
   lines = 0;
-  level = getStartLevel();
+  startLevel = getStartLevel();
+  level = startLevel;
   paused = false;
   gameOver = false;
   dropInterval = levelInterval(level);
