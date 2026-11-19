@@ -49,6 +49,7 @@ const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
 
 const themeToggle = document.getElementById('theme-toggle');
+const skinSelect = document.getElementById('skin-select');
 
 const recordForm = document.getElementById('record-form');
 const recordRankEl = document.getElementById('record-rank');
@@ -162,6 +163,99 @@ const startLevelSelect = document.getElementById('start-level');
 
 const MAX_START_LEVEL = 10;
 const RESUME_INPUT_LOCK_MS = 250;
+
+// ---- Skins: cada una define su paleta (opcional) y su función de dibujo de bloque ----
+function mixWhite(hex, t) {
+  const n = parseInt(hex.slice(1), 16);
+  const ch = s => Math.round(((n >> s) & 255) * (1 - t) + 255 * t);
+  return `rgb(${ch(16)},${ch(8)},${ch(0)})`;
+}
+
+function roundRectPath(context, x, y, w, h, r) {
+  context.beginPath();
+  context.moveTo(x + r, y);
+  context.arcTo(x + w, y, x + w, y + h, r);
+  context.arcTo(x + w, y + h, x, y + h, r);
+  context.arcTo(x, y + h, x, y, r);
+  context.arcTo(x, y, x + w, y, r);
+  context.closePath();
+}
+
+const SKINS = {
+  retro: {
+    colors: COLORS,
+    drawCell(context, px, py, size, color) {
+      context.fillStyle = color;
+      context.fillRect(px + 1, py + 1, size - 2, size - 2);
+      context.fillStyle = theme.highlight;
+      context.fillRect(px + 1, py + 1, size - 2, 4);
+      // borde (solo visible en tema claro, para dar contraste a los colores pastel)
+      context.strokeStyle = theme.blockBorder;
+      context.lineWidth = 1;
+      context.strokeRect(px + 1.5, py + 1.5, size - 3, size - 3);
+    },
+  },
+  neon: {
+    colors: [null, '#00f0ff', '#fff700', '#d500f9', '#39ff14', '#ff1744', '#2979ff', '#ff9100', '#e0e0e0', '#ff1744'],
+    drawCell(context, px, py, size, color) {
+      context.shadowColor = color;
+      context.shadowBlur = 12;
+      context.fillStyle = color + '33'; // relleno translúcido
+      context.fillRect(px + 3, py + 3, size - 6, size - 6);
+      context.strokeStyle = color;
+      context.lineWidth = 2;
+      context.strokeRect(px + 3, py + 3, size - 6, size - 6);
+      context.shadowBlur = 0;
+      context.shadowColor = 'transparent';
+    },
+  },
+  pastel: {
+    colors: COLORS.map(c => c && mixWhite(c, 0.45)),
+    drawCell(context, px, py, size, color) {
+      roundRectPath(context, px + 2, py + 2, size - 4, size - 4, 8);
+      context.fillStyle = color;
+      context.fill();
+      context.strokeStyle = 'rgba(0,0,0,0.12)';
+      context.lineWidth = 1;
+      context.stroke();
+      // brillo suave
+      context.fillStyle = 'rgba(255,255,255,0.45)';
+      roundRectPath(context, px + 6, py + 5, size - 12, 4, 2);
+      context.fill();
+    },
+  },
+  pixel: {
+    colors: COLORS,
+    drawCell(context, px, py, size, color) {
+      const u = size / 6; // rejilla de 6×6 "píxeles"
+      context.fillStyle = color;
+      context.fillRect(px, py, size, size);
+      for (let r = 0; r < 6; r++) {
+        for (let c = 0; c < 6; c++) {
+          if (r === 0 || c === 0) context.fillStyle = 'rgba(255,255,255,0.35)';      // luz arriba/izquierda
+          else if (r === 5 || c === 5) context.fillStyle = 'rgba(0,0,0,0.35)';       // sombra abajo/derecha
+          else if ((r + c) % 2 === 0) context.fillStyle = 'rgba(0,0,0,0.14)';        // trama de ajedrez
+          else continue;
+          context.fillRect(px + c * u, py + r * u, u, u);
+        }
+      }
+      context.strokeStyle = 'rgba(0,0,0,0.6)';
+      context.lineWidth = 1;
+      context.strokeRect(px + 0.5, py + 0.5, size - 1, size - 1);
+    },
+  },
+};
+
+let skinName = 'retro';
+
+function applySkin(name) {
+  if (!SKINS[name]) name = 'retro';
+  skinName = name;
+  document.documentElement.dataset.skin = name;
+  skinSelect.value = name;
+  // Los colores CSS del canvas dependen de la skin: releer vía applyTheme (también redibuja)
+  applyTheme(document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
+}
 
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 let startLevel = 1;        // nivel con el que empieza cada partida (se elige en el menú de pausa)
@@ -310,10 +404,12 @@ function updateHUD() {
 
 function drawBlock(context, x, y, colorIndex, size, alpha) {
   if (!colorIndex) return;
-  const color = COLORS[colorIndex];
+  const skin = SKINS[skinName];
+  const color = skin.colors[colorIndex];
   context.globalAlpha = alpha ?? 1;
   if (colorIndex === BOMB) {
     const cx = x * size + size / 2, cy = y * size + size / 2 + 2;
+    if (skinName === 'neon') { context.shadowColor = color; context.shadowBlur = 12; }
     context.fillStyle = theme.bombBody;
     context.beginPath();
     context.arc(cx, cy, size / 2 - 4, 0, Math.PI * 2);
@@ -328,18 +424,12 @@ function drawBlock(context, x, y, colorIndex, size, alpha) {
     context.stroke();
     context.fillStyle = color;
     context.fillRect(cx + 7, cy - size / 2 - 1, 4, 4);
+    context.shadowBlur = 0;
+    context.shadowColor = 'transparent';
     context.globalAlpha = 1;
     return;
   }
-  context.fillStyle = color;
-  context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
-  // highlight
-  context.fillStyle = theme.highlight;
-  context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
-  // borde (solo visible en tema claro, para dar contraste a los colores pastel)
-  context.strokeStyle = theme.blockBorder;
-  context.lineWidth = 1;
-  context.strokeRect(x * size + 1.5, y * size + 1.5, size - 3, size - 3);
+  skin.drawCell(context, x * size, y * size, size, color);
   context.globalAlpha = 1;
 }
 
@@ -559,7 +649,15 @@ themeToggle.addEventListener('click', () => {
   themeToggle.blur(); // evita que Space dispare el botón y hardDrop() a la vez
 });
 
-applyTheme(document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
+skinSelect.addEventListener('change', () => {
+  try { localStorage.setItem('skin', skinSelect.value); } catch (e) {}
+  applySkin(skinSelect.value);
+  skinSelect.blur(); // evita que las flechas cambien la skin mientras se juega
+});
+
+let savedSkin = 'retro';
+try { savedSkin = localStorage.getItem('skin') || 'retro'; } catch (e) {}
+applySkin(savedSkin); // aplica también el tema
 
 // Pantalla de inicio: estado listo pero sin arrancar el bucle hasta pulsar "Jugar"
 init();
