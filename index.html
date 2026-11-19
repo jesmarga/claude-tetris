@@ -55,6 +55,33 @@
       </aside>
     </div>
 
+    <div id="pause-menu" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+      <div class="overlay-box">
+        <p id="pause-title" class="menu-title">PAUSA</p>
+        <div class="menu-main" id="pause-main">
+          <button id="resume-btn" class="menu-btn" type="button">Reanudar</button>
+          <button id="pause-restart-btn" class="menu-btn" type="button">Reiniciar</button>
+          <button id="controls-btn" class="menu-btn" type="button">Ver controles</button>
+          <label class="menu-field" for="start-level">
+            Nivel inicial
+            <select id="start-level"></select>
+          </label>
+          <span class="menu-hint">Se aplica a la próxima partida</span>
+        </div>
+        <div class="menu-controls hidden" id="pause-controls">
+          <ul>
+            <li><kbd>←</kbd><kbd>→</kbd> mover</li>
+            <li><kbd>↑</kbd> / <kbd>X</kbd> rotar</li>
+            <li><kbd>↓</kbd> bajar</li>
+            <li><kbd>Space</kbd> caída</li>
+            <li><kbd>P</kbd> / <kbd>Esc</kbd> pausa</li>
+            <li>💣 bomba: destruye 3×3</li>
+          </ul>
+          <button id="controls-back-btn" class="menu-btn" type="button">Volver</button>
+        </div>
+      </div>
+    </div>
+
     <div id="overlay" class="overlay hidden">
       <div class="overlay-box">
         <p id="overlay-title">GAME OVER</p>

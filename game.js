@@ -69,7 +69,25 @@ function applyTheme(name) {
   if (current && next) { draw(); drawNext(); }
 }
 
+const pauseMenu = document.getElementById('pause-menu');
+const pauseMain = document.getElementById('pause-main');
+const pauseControls = document.getElementById('pause-controls');
+const resumeBtn = document.getElementById('resume-btn');
+const pauseRestartBtn = document.getElementById('pause-restart-btn');
+const controlsBtn = document.getElementById('controls-btn');
+const controlsBackBtn = document.getElementById('controls-back-btn');
+const startLevelSelect = document.getElementById('start-level');
+
+const MAX_START_LEVEL = 10;
+const RESUME_INPUT_LOCK_MS = 250;
+
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
+let startLevel = 1;        // nivel con el que empieza cada partida (se elige en el menú de pausa)
+let inputLockUntil = 0;    // ignora teclas justo después de reanudar
+
+function intervalForLevel(lvl) {
+  return Math.max(100, 1000 - (lvl - 1) * 90);
+}
 
 function createBoard() {
   return Array.from({ length: ROWS }, () => new Array(COLS).fill(0));
@@ -150,8 +168,8 @@ function clearLines() {
   if (cleared) {
     lines += cleared;
     score += (LINE_SCORES[cleared] || 0) * level;
-    level = Math.floor(lines / 10) + 1;
-    dropInterval = Math.max(100, 1000 - (level - 1) * 90);
+    level = startLevel + Math.floor(lines / 10);
+    dropInterval = intervalForLevel(level);
     updateHUD();
   }
 }
@@ -294,17 +312,25 @@ function endGame() {
   overlay.classList.remove('hidden');
 }
 
+function showPauseMain() {
+  pauseMain.classList.remove('hidden');
+  pauseControls.classList.add('hidden');
+}
+
 function togglePause() {
   if (gameOver) return;
   paused = !paused;
   if (!paused) {
+    pauseMenu.classList.add('hidden');
+    if (pauseMenu.contains(document.activeElement)) document.activeElement.blur();
+    inputLockUntil = performance.now() + RESUME_INPUT_LOCK_MS;
     lastTime = performance.now();
     loop(lastTime);
   } else {
     cancelAnimationFrame(animId);
-    overlayTitle.textContent = 'PAUSA';
-    overlayScore.textContent = '';
-    overlay.classList.remove('hidden');
+    showPauseMain();
+    pauseMenu.classList.remove('hidden');
+    resumeBtn.focus();
   }
 }
 
@@ -329,11 +355,13 @@ function init() {
   board = createBoard();
   score = 0;
   lines = 0;
-  level = 1;
   paused = false;
   gameOver = false;
-  dropInterval = 1000;
+  level = startLevel;
+  dropInterval = intervalForLevel(level);
   dropAccum = 0;
+  pauseMenu.classList.add('hidden');
+  inputLockUntil = 0;
   lastTime = performance.now();
   next = randomPiece();
   spawn();
@@ -344,8 +372,15 @@ function init() {
 }
 
 document.addEventListener('keydown', e => {
-  if (e.code === 'KeyP') { togglePause(); return; }
+  if (e.code === 'KeyP' || e.code === 'Escape') {
+    if (!e.repeat) togglePause();
+    return;
+  }
   if (paused || gameOver) return;
+  if (performance.now() < inputLockUntil) {
+    if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
+    return;
+  }
   switch (e.code) {
     case 'ArrowLeft':
       if (!collide(current.shape, current.x - 1, current.y)) current.x--;
@@ -369,6 +404,25 @@ document.addEventListener('keydown', e => {
 });
 
 restartBtn.addEventListener('click', init);
+
+for (let i = 1; i <= MAX_START_LEVEL; i++) startLevelSelect.add(new Option(String(i), String(i)));
+startLevelSelect.addEventListener('change', () => {
+  startLevel = Number(startLevelSelect.value);
+});
+resumeBtn.addEventListener('click', togglePause);
+pauseRestartBtn.addEventListener('click', () => {
+  if (document.activeElement) document.activeElement.blur();
+  init();
+});
+controlsBtn.addEventListener('click', () => {
+  pauseMain.classList.add('hidden');
+  pauseControls.classList.remove('hidden');
+  controlsBackBtn.focus();
+});
+controlsBackBtn.addEventListener('click', () => {
+  showPauseMain();
+  controlsBtn.focus();
+});
 
 themeToggle.addEventListener('click', () => {
   const isLight = document.documentElement.dataset.theme === 'light';
