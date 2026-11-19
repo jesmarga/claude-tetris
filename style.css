@@ -45,6 +45,15 @@
   --block-border: rgba(0, 0, 0, 0.3);
 }
 
+/* Skin Neon: tablero negro con cuadrícula tenue, en ambos temas */
+:root[data-skin="neon"] {
+  --canvas-bg: #000000;
+  --grid-color: #1b1b2f;
+  --block-highlight: transparent;
+  --block-border: transparent;
+  --bomb-body: #000000;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -151,6 +160,23 @@ kbd {
   font-size: 11px;
   font-family: inherit;
   color: var(--kbd-text);
+}
+
+/* ---- Selector de skin ---- */
+#skin-select {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#skin-select option {
+  background: var(--bg);
+  color: var(--text);
 }
 
 /* ---- Interruptor de tema ---- */
