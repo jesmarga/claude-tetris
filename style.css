@@ -228,3 +228,99 @@ kbd {
 #restart-btn:hover {
   background: var(--accent-hover);
 }
+
+/* ---- Menú de pausa ---- */
+.menu-title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: var(--accent);
+}
+
+.menu-main,
+.menu-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
+  min-width: 200px;
+}
+
+.menu-controls.hidden {
+  display: none;
+}
+
+.menu-main.hidden {
+  display: none;
+}
+
+.menu-btn {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.menu-btn:hover,
+.menu-btn:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+#resume-btn {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+
+#resume-btn:hover,
+#resume-btn:focus-visible {
+  background: var(--accent-hover);
+  color: var(--on-accent);
+}
+
+.menu-field {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.menu-field select {
+  background: var(--kbd-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
+.menu-hint {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.menu-controls ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: left;
+}
+
+.menu-controls li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
